@@ -1,0 +1,133 @@
+#!/bin/bash 
+
+##############################################################################
+# Installs the rsync utility based on the Linux distribution.
+# identify_distro: identifies the current distro.
+# install_rsync: performs installation.
+# Supported distros
+#   - Arch
+#   - Ubuntu
+#   - Centos
+#   - Fedora
+#   - Debian
+# Unsupported distro results in an arror.
+##############################################################################
+
+function identify_distro() {
+  set -o errexit 
+  [[ ! -f /etc/os-release ]] && echo "os-release not found!" && exit 1
+  echo "Identifyig Distro"
+  . /etc/os-release
+  id=$ID
+}
+
+function install_rsync() {
+  set -o errexit 
+  identify_distro
+  echo "your distro is $id"  
+  case ${id} in
+    arch|manjaro|garuda)
+      echo "Arch Linux - Performing full system upgrade and Installing rsync"
+      command $(sudo pacman -Syu && sudo pacman -S rsync)
+      echo "DONE :)"
+      exit 0
+      ;;
+    ubuntu|debian)
+      echo -e "Performing full system upgrade and Installing rsync"
+      command $(sudo apt update && sudo apt upgrade -y)
+      echo "DONE :)"
+      exit 0
+      ;;
+    centos|fedora)
+      echo "Performing full system upgrade and Installing rsync"
+      command $(sudo dnf upgrade && sudo dnf install rsync)
+      echo "DONE :)"
+      exit 0
+      ;;
+    *)
+      echo "Unknown distro identified.\nInstall rsync to begin backup"
+      exit 1 
+      ;;
+  esac
+}
+
+# check if the system has rsync installed if not then install
+function is_rsync_installed() {
+  set -o errexit 
+  if command -v rsync >/dev/null 2>&1; then           
+    echo "rsync is installed"                         
+  else                                                
+    echo -e "rsync not installed\nInstalling rsync...\n" 
+    install_rsync
+  fi
+}                                                     
+
+function backup_data() {
+  set -o errexit 
+  $(which rsync) -avze "ssh -i $private_key" $source $destination:~/backup-data/$destination_file
+  echo "Destination file: $destination_file"
+  echo "Backup Successful :)"
+}
+
+function restore_data() {
+  set -o errexit
+  $(which rsync) -avze "ssh -i $private_key" $destination:~/backup-data/ $restore_destination
+  
+  echo "Restore Successful :)"
+}
+
+# Variable Declaration
+source="<enter-source-path>"
+restore_destination="<enter-restore-destination>"
+private_key="<enter-private-key-path>"
+destination_file=$(date +"%Y%m%d_%H%M%S")
+
+ACTION='backup' # setting default ACTION
+OPTSTRING=":br" # ":" helps to handle errors and store $OPTARG, if used after an option like b: it makes argument mandatory 
+ 
+# perform backup if no arguments provided
+if [[ $# -eq 0 ]]; then
+  echo "default action: $ACTION"
+  read -p "Enter destination ip address: " dest_ip
+else
+  while getopts $OPTSTRING opt; do
+    case $opt in
+      b) 
+        ACTION='backup'
+        echo "performing action - $ACTION"
+        read -p "Enter destination ip address: " dest_ip
+        ;;
+      r)
+        ACTION='restore'
+        echo "performing action - $ACTION"
+        read -p "Enter the source address to restore: " dest_ip 
+        ;;
+      
+      \?)
+        echo "Invalid option: -$OPTARG" >&2
+        echo -e "\nUsage:\t-b backup data\n\t-r restore data" exit 1
+        ;;
+    esac
+  done
+fi
+
+main(){
+  is_rsync_installed 
+  destination="<enter-remote-destination>"
+  case $ACTION in
+    backup)
+      echo "Performing Backup"
+      backup_data
+      ;;
+    restore) 
+      echo "Performing restore"
+      restore_data
+      ;;
+    \?)
+      echo "Invalid option -${OPTARG}"
+      ;;
+  esac
+}
+
+main
+
