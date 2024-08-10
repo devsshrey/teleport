@@ -1,8 +1,8 @@
 # teleport
-## A secure file sharing and backup tool. 
+## A secure file sharing and backup utility. 
 
-A bash script that serves as a file sharing tool using the [rsync](https://wiki.archlinux.org/title/Rsync) utility. [Rsync Wikipedia](https://en.m.wikipedia.org/wiki/Rsync)
-And a backup tool. 
+A bash script that serves as a file sharing utility using the [rsync](https://wiki.archlinux.org/title/Rsync) utility. [Rsync Wikipedia](https://en.m.wikipedia.org/wiki/Rsync)
+And a backup utility. 
 
 ## Current Major Features
 #### 1. File Sharing
