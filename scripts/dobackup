@@ -34,13 +34,13 @@ function install_rsync() {
       ;;
     ubuntu|debian)
       echo -e "Performing full system upgrade and Installing rsync"
-      command $(sudo apt update && sudo apt upgrade -y)
+      command $(sudo apt update && sudo apt install rsync)
       echo "DONE :)"
       exit 0
       ;;
     centos|fedora)
       echo "Performing full system upgrade and Installing rsync"
-      command $(sudo dnf upgrade && sudo dnf install rsync)
+      command $(sudo dnf update info && sudo dnf install rsync)
       echo "DONE :)"
       exit 0
       ;;
